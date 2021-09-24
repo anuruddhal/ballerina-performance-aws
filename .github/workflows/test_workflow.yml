@@ -51,7 +51,7 @@ jobs:
         # Wait for ingress ip
         sleep 60
         host=`kubectl get svc nginx-ingress-ingress-nginx-controller --namespace ingress-basic -o=go-template --template='{{(index .status.loadBalancer.ingress 0 ).hostname}}'`
-        IP=`kubectl get nodes | awk '{if (NR==2) {print $1}}'`
+        IP=`nslookup $host |  awk '{if (NR==6) {print $2}}'`
         echo "Ingress IP: $IP"
     - uses: actions/checkout@v2
     - name: Login to DockerHub
