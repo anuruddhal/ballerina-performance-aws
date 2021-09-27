@@ -103,6 +103,6 @@ jobs:
         fi
         ssh -i ballerina-jmeter-vm.pem ubuntu@${DNS} "rm -r ballerina-performance-cloud && source /etc/profile.d/10-perf-vm.sh && execute-tests.sh -c $IP -s $SCENARIO_NAME -p $PAYLOAD -u $USERS"
         aws ec2 terminate-instances --instance-ids ${INSTANCE_ID}
-   - name: Delete Cluster
-     run: |
-       eksctl delete cluster "${{ github.event.inputs.clusterName }}"
+     - name: Delete Cluster
+       run: |
+         eksctl delete cluster "${{ github.event.inputs.clusterName }}"
