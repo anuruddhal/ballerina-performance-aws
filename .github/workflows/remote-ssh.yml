@@ -19,11 +19,9 @@ jobs:
       run: |
         echo "$SSH_KEY" > ballerina-jmeter-vm.pem
         chmod 400 ballerina-jmeter-vm.pem
-        #!/bin/bash -e
-        INSTANCE_ID=$(aws ec2 run-instances --image-id ami-055d9171bb70733a3 --count 1 --instance-type c5.xlarge --key-name ballerina-jmeter-vm --security-groups ballerina-jmeter-sg --output text --query 'Instances[*].InstanceId')
-        while STATE=$(aws ec2 describe-instances --instance-ids ${INSTANCE_ID} --output text --query 'Reservations[*].Instances[*].State.Name'); test "$STATE" != "running"; do
-            sleep 1;
-        done;
+        mkdir -p /home/runner/.ssh
+        INSTANCE_ID="i-0d612d6328f4bbedc"
+        # $(aws ec2 run-instances --image-id ami-055d9171bb70733a3 --count 1 --instance-type c5.xlarge --key-name ballerina-jmeter-vm --security-groups ballerina-jmeter-sg --output text --query 'Instances[*].InstanceId')
         aws ec2 wait instance-status-ok
         DNS=$(aws ec2 describe-instances --instance-ids ${INSTANCE_ID} --output text --query 'Reservations[*].Instances[*].PublicDnsName')
         if [ -z "$(ssh-keygen -F $DNS)" ]; then
