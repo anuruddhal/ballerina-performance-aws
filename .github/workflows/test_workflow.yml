@@ -95,26 +95,14 @@ jobs:
         echo "$SSH_KEY" > ballerina-jmeter-vm.pem
         chmod 400 ballerina-jmeter-vm.pem
         mkdir -p /home/runner/.ssh
-        INSTANCE_ID="i-0d612d6328f4bbedc"
-        # $(aws ec2 run-instances --image-id ami-055d9171bb70733a3 --count 1 --instance-type c5.xlarge --key-name ballerina-jmeter-vm --security-groups ballerina-jmeter-sg --output text --query 'Instances[*].InstanceId')
+        INSTANCE_ID=$(aws ec2 run-instances --image-id ami-055d9171bb70733a3 --count 1 --instance-type c5.xlarge --key-name ballerina-jmeter-vm --security-groups ballerina-jmeter-sg --output text --query 'Instances[*].InstanceId')
         aws ec2 wait instance-status-ok
         DNS=$(aws ec2 describe-instances --instance-ids ${INSTANCE_ID} --output text --query 'Reservations[*].Instances[*].PublicDnsName')
         if [ -z "$(ssh-keygen -F $DNS)" ]; then
           ssh-keyscan -H $DNS >> ~/.ssh/known_hosts
         fi
         ssh -i ballerina-jmeter-vm.pem ubuntu@${DNS} "rm -r ballerina-performance-cloud && source /etc/profile.d/10-perf-vm.sh && execute-tests.sh -c $IP -s $SCENARIO_NAME -p $PAYLOAD -u $USERS"
-
-#   steps:
-#   - name: Cleaning up the cluster
-#     if: always()
-#   - name: Configure AWS Credentials
-#     uses: aws-actions/configure-aws-credentials@v1
-#     with:
-#       aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-#       aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-#       aws-region: us-west-2
-#   - name: Delete Cluster
-#     run: |
-#       curl --silent --location "https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_$(uname -s)_amd64.tar.gz" | tar xz -C /tmp
-#       sudo mv /tmp/eksctl /usr/local/bin
-#       eksctl delete cluster
+        aws ec2 terminate-instances --instance-ids ${INSTANCE_ID}
+   - name: Delete Cluster
+     run: |
+       eksctl delete cluster "${{ github.event.inputs.clusterName }}"
