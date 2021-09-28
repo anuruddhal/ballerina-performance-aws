@@ -84,26 +84,39 @@ jobs:
       run: |
         host=`kubectl get svc nginx-ingress-ingress-nginx-controller --namespace ingress-basic -o=go-template --template='{{(index .status.loadBalancer.ingress 0 ).hostname}}'`
         IP=`nslookup $host |  awk '{if (NR==6) {print $2}}'`
+        INSTANCE_ID=$(aws ec2 run-instances --image-id ami-0327006c87b23e535 --count 1 --instance-type c5.xlarge --key-name ballerina-jmeter-vm --security-groups ballerina-jmeter-sg --output text --query 'Instances[*].InstanceId')
+        aws ec2 wait instance-status-ok
+        DNS=$(aws ec2 describe-instances --instance-ids ${INSTANCE_ID} --output text --query 'Reservations[*].Instances[*].PublicDnsName')
         echo "Ingress IP: $IP"
         echo "::set-output name=cluster-ip::$IP"
         echo "::set-output name=scenario-name::${TEST_NAME}"
         echo "::set-output name=git-token::${{ secrets.BALLERINA_BOT_TOKEN }}"
-    - name: Execute Tests
+        echo "::set-output name=instance-id::$INSTANCE_ID"
+        echo "::set-output name=dns-name::$DNS"
+    - name: Execute performance tests
+      uses: appleboy/ssh-action@master
       env:
-        SSH_KEY: ${{secrets.SSH_KEY}}
+        IP: ${{ steps.write.outputs.cluster-ip }}
+        SCENARIO_NAME: ${{ steps.write.outputs.scenario-name }}
+        PAYLOAD: ${{ matrix.payload }}
+        USERS: ${{ matrix.users }}
+      with:
+        host: ${{ steps.write.outputs.dns-name }}
+        username: ubuntu
+        key: ${{ secrets.SSH_KEY }}
+        envs: IP,SCENARIO_NAME,PAYLOAD,USERS
+        command_timeout: '180m' #3 hours
+        timeout: 300s #5 mins
+        script: |
+          git clone https://github.com/anuruddhal/ballerina-performance-cloud
+          sudo cp -r ballerina-performance-cloud/base-image /
+          sudo chmod -R 777 /base-image
+          sh /base-image/init.sh
+          source /etc/profile.d/10-perf-vm.sh
+          execute-tests.sh -c $IP -s $SCENARIO_NAME -p $PAYLOAD -u $USERS
+    - name: Clean up resources
+      env:
+        INSTANCE_ID: ${{ steps.write.outputs.instance-id }}
       run: |
-        echo "$SSH_KEY" > ballerina-jmeter-vm.pem
-        chmod 400 ballerina-jmeter-vm.pem
-        mkdir -p /home/runner/.ssh
-        touch /home/runner/.ssh/known_hosts
-        INSTANCE_ID=$(aws ec2 run-instances --image-id ami-055d9171bb70733a3 --count 1 --instance-type c5.xlarge --key-name ballerina-jmeter-vm --security-groups ballerina-jmeter-sg --output text --query 'Instances[*].InstanceId')
-        aws ec2 wait instance-status-ok
-        DNS=$(aws ec2 describe-instances --instance-ids ${INSTANCE_ID} --output text --query 'Reservations[*].Instances[*].PublicDnsName')
-        if [ -z "$(ssh-keygen -F $DNS)" ]; then
-          ssh-keyscan -H $DNS >> ~/.ssh/known_hosts
-        fi
-        ssh -i ballerina-jmeter-vm.pem ubuntu@${DNS} "rm -r ballerina-performance-cloud && source /etc/profile.d/10-perf-vm.sh && execute-tests.sh -c $IP -s $SCENARIO_NAME -p $PAYLOAD -u $USERS"
-        aws ec2 terminate-instances --instance-ids ${INSTANCE_ID}
-    - name: Execute Tests
-      run: |
+         aws ec2 terminate-instances --instance-ids ${INSTANCE_ID}
          eksctl delete cluster "${{ github.event.inputs.clusterName }}"
