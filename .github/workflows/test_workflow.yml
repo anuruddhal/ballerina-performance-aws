@@ -1,4 +1,4 @@
-name: test_workflow
+name: Test Workflow
 
 on:
   workflow_dispatch:
@@ -32,24 +32,24 @@ jobs:
       run: |
         curl --silent --location "https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_$(uname -s)_amd64.tar.gz" | tar xz -C /tmp
         sudo mv /tmp/eksctl /usr/local/bin
-        #        eksctl create cluster \
-        #          --name "${{ github.event.inputs.clusterName }}" \
-        #          --region us-west-2 \
+        eksctl create cluster \
+          --name "${{ github.event.inputs.clusterName }}" \
+          --region us-west-2 \
     - name: Deploy Niginx
       run: |
         eksctl utils write-kubeconfig --cluster="${{ github.event.inputs.clusterName }}"
         # Create a namespace for your ingress resources
-        ## kubectl create namespace ingress-basic
+        kubectl create namespace ingress-basic
 
         # Add the ingress-nginx repository
-        ##helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
+        helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
 
         # Use Helm to deploy an NGINX ingress controller
-        ##helm install nginx-ingress ingress-nginx/ingress-nginx \
-          ##  --namespace ingress-basic \
-          ##  --set controller.replicaCount=2 \
+        helm install nginx-ingress ingress-nginx/ingress-nginx \
+            --namespace ingress-basic \
+            --set controller.replicaCount=2 \
         # Wait for ingress ip
-        ##sleep 60
+        sleep 60
     - uses: actions/checkout@v2
     - name: Login to DockerHub
       uses: docker/login-action@v1
