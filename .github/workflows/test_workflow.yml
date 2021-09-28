@@ -32,9 +32,9 @@ jobs:
       run: |
         curl --silent --location "https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_$(uname -s)_amd64.tar.gz" | tar xz -C /tmp
         sudo mv /tmp/eksctl /usr/local/bin
-        eksctl create cluster \
-          --name "${{ github.event.inputs.clusterName }}" \
-          --region us-west-2 \
+        #        eksctl create cluster \
+        #          --name "${{ github.event.inputs.clusterName }}" \
+        #          --region us-west-2 \
     - name: Deploy Niginx
       run: |
         eksctl utils write-kubeconfig --cluster="${{ github.event.inputs.clusterName }}"
@@ -84,7 +84,7 @@ jobs:
       run: |
         host=`kubectl get svc nginx-ingress-ingress-nginx-controller --namespace ingress-basic -o=go-template --template='{{(index .status.loadBalancer.ingress 0 ).hostname}}'`
         IP=`nslookup $host |  awk '{if (NR==6) {print $2}}'`
-        INSTANCE_ID=$(aws ec2 run-instances --image-id ami-0327006c87b23e535 --count 1 --instance-type c5.xlarge --key-name ballerina-jmeter-vm --security-groups ballerina-jmeter-sg --output text --query 'Instances[*].InstanceId')
+        INSTANCE_ID=$(aws ec2 run-instances --image-id ami-090717c950a5c34d3 --count 1 --instance-type c5.xlarge --key-name ballerina-jmeter-vm --security-groups ballerina-jmeter-sg --output text --query 'Instances[*].InstanceId')
         aws ec2 wait instance-status-ok
         DNS=$(aws ec2 describe-instances --instance-ids ${INSTANCE_ID} --output text --query 'Reservations[*].Instances[*].PublicDnsName')
         echo "Ingress IP: $IP"
