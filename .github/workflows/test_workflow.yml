@@ -112,7 +112,7 @@ jobs:
         USERS: ${{ matrix.users }}
       with:
         host: ${{ steps.write.outputs.dns-name }}
-        username: ubuntu
+        username: bal-admin
         key: ${{ secrets.SSH_KEY }}
         envs: IP,SCENARIO_NAME,PAYLOAD,USERS
         command_timeout: '180m' #3 hours
