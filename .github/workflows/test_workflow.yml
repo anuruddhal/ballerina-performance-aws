@@ -95,6 +95,7 @@ jobs:
         echo "$SSH_KEY" > ballerina-jmeter-vm.pem
         chmod 400 ballerina-jmeter-vm.pem
         mkdir -p /home/runner/.ssh
+        touch /home/runner/.ssh/known_hosts
         INSTANCE_ID=$(aws ec2 run-instances --image-id ami-055d9171bb70733a3 --count 1 --instance-type c5.xlarge --key-name ballerina-jmeter-vm --security-groups ballerina-jmeter-sg --output text --query 'Instances[*].InstanceId')
         aws ec2 wait instance-status-ok
         DNS=$(aws ec2 describe-instances --instance-ids ${INSTANCE_ID} --output text --query 'Reservations[*].Instances[*].PublicDnsName')
@@ -103,3 +104,6 @@ jobs:
         fi
         ssh -i ballerina-jmeter-vm.pem ubuntu@${DNS} "rm -r ballerina-performance-cloud && source /etc/profile.d/10-perf-vm.sh && execute-tests.sh -c $IP -s $SCENARIO_NAME -p $PAYLOAD -u $USERS"
         aws ec2 terminate-instances --instance-ids ${INSTANCE_ID}
+    - name: Execute Tests
+      run: |
+         eksctl delete cluster "${{ github.event.inputs.clusterName }}"
