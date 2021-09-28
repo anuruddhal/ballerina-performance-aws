@@ -39,7 +39,7 @@ jobs:
         script: |
           git clone https://github.com/ballerina-platform/ballerina-performance-cloud
           sudo cp -r ballerina-performance-cloud/base-image /
-          sudo chmod -R 777 /base-image
+#          sudo chmod -R 777 /base-image
           sh /base-image/init.sh
           source /etc/profile.d/10-perf-vm.sh
           execute-tests.sh -c "35.161.9.222" -s "test_passthrough" -p 50 -u 60
