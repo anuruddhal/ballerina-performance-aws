@@ -28,18 +28,36 @@ jobs:
         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: us-west-2
+    - name: Write values to outputs
+      id: write
+      run: |
+        user_data_file=$(mktemp /tmp/user-data-XXXX.txt)
+        cat <<EOF >$user_data_file
+        #cloud-config
+        system_info:
+          default_user:
+            name: bal-admin
+        EOF
+        INSTANCE_ID=$(aws ec2 run-instances --user-data file://$user_data_file  --image-id ami-090717c950a5c34d3 --count 1 --instance-type c5.xlarge --key-name ballerina-jmeter-vm --security-groups ballerina-jmeter-sg --output text --query 'Instances[*].InstanceId')
+        while STATE=$(aws ec2 describe-instances --instance-ids $INSTANCE_ID --output text --query 'Reservations[*].Instances[*].State.Name'); test "$STATE" != "running"; do
+            sleep 1;
+        done;
+        aws ec2 wait instance-status-ok
+        DNS=$(aws ec2 describe-instances --instance-ids ${INSTANCE_ID} --output text --query 'Reservations[*].Instances[*].PublicDnsName')
+        echo "::set-output name=instance-id::$INSTANCE_ID"
+        echo "::set-output name=dns-name::$DNS"
     - name: ssh commands
       uses: appleboy/ssh-action@master
       with:
-        host: "ec2-35-80-15-212.us-west-2.compute.amazonaws.com"
-        username: ubuntu
+        host:  ${{ steps.write.outputs.dns-name }}
+        username: bal-admin
         key: ${{ secrets.SSH_KEY }}
         command_timeout: '180m' #3 hours
         timeout: 300s #5 mins
         script: |
-          git clone https://github.com/ballerina-platform/ballerina-performance-cloud
+          git clone https://github.com/xlight05/ballerina-performance-cloud
           sudo cp -r ballerina-performance-cloud/base-image /
-#          sudo chmod -R 777 /base-image
+          sudo chmod -R 777 /base-image
           sh /base-image/init.sh
           source /etc/profile.d/10-perf-vm.sh
           execute-tests.sh -c "35.161.9.222" -s "test_passthrough" -p 50 -u 60
