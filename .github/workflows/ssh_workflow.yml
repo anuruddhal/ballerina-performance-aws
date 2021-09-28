@@ -1,4 +1,4 @@
-name: test_workflow
+name: SSH_Workflow
 
 on:
   workflow_dispatch:
@@ -38,3 +38,5 @@ jobs:
         script: |
           whoami
           ls -al
+          source /etc/profile.d/10-perf-vm.sh
+          execute-tests.sh -c "34.208.63.195" -s "test_passthrough" -p "50" -u "60"
