@@ -12,7 +12,7 @@ jobs:
     strategy:
       max-parallel: 1
       matrix:
-        count: [1,2,3,4,5,6]
+        count: [2,3,4,5,6,7]
         payload: [ 0 ]
         users: [ 60 ]
     runs-on: ubuntu-latest
