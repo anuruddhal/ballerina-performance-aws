@@ -11,6 +11,7 @@ jobs:
     strategy:
       max-parallel: 1
       matrix:
+        count: [1,2,3,4,5]
         payload: [ 50 ]
         users: [ 1 ]
     runs-on: ubuntu-latest
@@ -31,7 +32,7 @@ jobs:
       run: |
         curl --silent --location "https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_$(uname -s)_amd64.tar.gz" | tar xz -C /tmp
         sudo mv /tmp/eksctl /usr/local/bin
-        eksctl utils write-kubeconfig --cluster="${{ github.event.inputs.clusterName }}-"
+        eksctl utils write-kubeconfig --cluster="${{ github.event.inputs.clusterName }}"
         # Create a namespace for your ingress resources
         kubectl create namespace ingress-basic
 
@@ -106,4 +107,4 @@ jobs:
         INSTANCE_ID: ${{ steps.write.outputs.instance-id }}
       run: |
          aws ec2 terminate-instances --instance-ids ${INSTANCE_ID}
-         eksctl delete cluster "${{ github.event.inputs.clusterName }}"-"${{ matrix.count }}"
+#         eksctl delete cluster "${{ github.event.inputs.clusterName }}"-"${{ matrix.count }}"
