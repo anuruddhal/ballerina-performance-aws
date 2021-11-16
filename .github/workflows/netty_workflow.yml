@@ -1,5 +1,4 @@
-name: Go Test Workflow
-
+name: Netty Test Workflow
 on:
   workflow_dispatch:
     inputs:
@@ -12,12 +11,11 @@ jobs:
     strategy:
       max-parallel: 1
       matrix:
-        count: [2,3,4,5,6,7]
-        payload: [ 0 ]
-        users: [ 60 ]
+        payload: [ 50 ]
+        users: [ 1 ]
     runs-on: ubuntu-latest
     env:
-      TEST_NAME: "go_test_hello"
+      TEST_NAME: "netty_hello"
       TEST_ROOT: "tests"
     timeout-minutes: 600
     steps:
@@ -29,13 +27,6 @@ jobs:
         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: us-west-2
-    - name: Create Cluster
-      run: |
-        curl --silent --location "https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_$(uname -s)_amd64.tar.gz" | tar xz -C /tmp
-        sudo mv /tmp/eksctl /usr/local/bin
-        eksctl create cluster \
-          --name "${{ github.event.inputs.clusterName }}"-"${{ matrix.count }}" \
-          --region us-west-2 \
     - name: Deploy Niginx
       run: |
         eksctl utils write-kubeconfig --cluster="${{ github.event.inputs.clusterName }}"-"${{ matrix.count }}"
