@@ -29,7 +29,9 @@ jobs:
         aws-region: us-west-2
     - name: Deploy Niginx
       run: |
-        eksctl utils write-kubeconfig --cluster="${{ github.event.inputs.clusterName }}"-"${{ matrix.count }}"
+        curl --silent --location "https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_$(uname -s)_amd64.tar.gz" | tar xz -C /tmp
+        sudo mv /tmp/eksctl /usr/local/bin
+        eksctl utils write-kubeconfig --cluster="${{ github.event.inputs.clusterName }}"-
         # Create a namespace for your ingress resources
         kubectl create namespace ingress-basic
 
