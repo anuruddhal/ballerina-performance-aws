@@ -5,7 +5,7 @@ on:
     inputs:
       clusterName:
         description: 'Cluster name'
-        default: 'bal-perf-cluster-test'
+        default: 'bal-perf-cluster'
         required: false
 jobs:
   setup:
