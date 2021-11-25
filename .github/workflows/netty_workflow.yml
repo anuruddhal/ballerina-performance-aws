@@ -52,7 +52,7 @@ jobs:
           default_user:
             name: bal-admin
         EOF
-        INSTANCE_ID=$(aws ec2 run-instances --user-data file://$user_data_file  --image-id ami-090717c950a5c34d3 --count 1 --instance-type c6g.2xlarge --key-name ballerina-jmeter-vm --security-groups ballerina-jmeter-sg --output text --query 'Instances[*].InstanceId')
+        INSTANCE_ID=$(aws ec2 run-instances --user-data file://$user_data_file  --image-id ami-090717c950a5c34d3 --count 1 --instance-type m5.xlarge --key-name ballerina-jmeter-vm --security-groups ballerina-jmeter-sg --output text --query 'Instances[*].InstanceId')
         while STATE=$(aws ec2 describe-instances --instance-ids $INSTANCE_ID --output text --query 'Reservations[*].Instances[*].State.Name'); test "$STATE" != "running"; do
             sleep 1;
         done;
