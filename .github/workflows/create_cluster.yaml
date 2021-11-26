@@ -27,8 +27,8 @@ jobs:
         eksctl create cluster \
           --name "${{ github.event.inputs.clusterName }}" \
           --region us-west-2 \
-          --node-type c6g.2xlarge \
-          --nodes 2 \
+          --node-type m5.xlarge \
+          --nodes 1 \
           --tags  "user=anuruddhal@wso2.com"\
 
         eksctl utils write-kubeconfig --cluster="${{ github.event.inputs.clusterName }}"
