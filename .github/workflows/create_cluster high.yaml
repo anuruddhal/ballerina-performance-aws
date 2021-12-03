@@ -1,0 +1,44 @@
+name: High Create Cluster
+
+on:
+  workflow_dispatch:
+    inputs:
+      clusterName:
+        description: 'Cluster name'
+        default: 'bal-perf-cluster'
+        required: false
+jobs:
+  setup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 600
+    steps:
+    - name: CHECKOUT
+      uses: actions/checkout@v2
+    - name: Configure AWS Credentials
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: us-west-2
+    - name: Create Cluster
+      run: |
+        curl --silent --location "https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_$(uname -s)_amd64.tar.gz" | tar xz -C /tmp
+        sudo mv /tmp/eksctl /usr/local/bin
+        eksctl create cluster \
+          --name "${{ github.event.inputs.clusterName }}" \
+          --region us-west-2 \
+          --node-type c5.4xlarge \
+          --nodes 1 \
+          --tags  "user=anuruddhal@wso2.com"\
+
+        eksctl utils write-kubeconfig --cluster="${{ github.event.inputs.clusterName }}"
+        # Create a namespace for your ingress resources
+        kubectl create namespace ingress-basic
+
+        # Add the ingress-nginx repository
+        helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
+
+        # Use Helm to deploy an NGINX ingress controller
+        helm install nginx-ingress ingress-nginx/ingress-nginx \
+            --namespace ingress-basic \
+            --set controller.replicaCount=2 \
